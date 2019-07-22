@@ -1,3 +1,5 @@
+Note: This is a new project under development.  Expect it to be incomplete and unreliable until the initial release.
+
 # py-vscode
 Write VSCode extensions using Python
 
