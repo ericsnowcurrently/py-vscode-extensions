@@ -1,9 +1,16 @@
 import argparse
 import sys
 
+from . import project
 
-def cmd_init():
-    raise NotImplementedError
+
+def cmd_init(root=None, *,
+             _init=project.initialize,
+             **kwargs
+             ):
+    cfg = project.Config(**kwargs)
+    cfg.validate()
+    _init(cfg, root)
 
 
 #######################################
@@ -25,6 +32,8 @@ def parse_args(prog=sys.argv[0], argv=sys.argv[1:]):
     subs = parser.add_subparsers(dest='cmd')
 
     init = subs.add_parser('init', parents=[common])
+    init.add_argument('--root')
+    init.add_argument('name')
 
     args = parser.parse_args(argv)
     ns = vars(args)
