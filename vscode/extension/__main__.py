@@ -13,11 +13,16 @@ def cmd_init(root=None, *,
     _init(cfg, root)
 
 
+def cmd_generate(root=None):
+    raise NotImplementedError
+
+
 #######################################
 # the script
 
 COMMANDS = {
         'init': cmd_init,
+        'generate': cmd_generate,
         }
 
 
@@ -33,7 +38,14 @@ def parse_args(prog=sys.argv[0], argv=sys.argv[1:]):
 
     init = subs.add_parser('init', parents=[common])
     init.add_argument('--root')
+    # XXX version
+    # XXX minvscode
+    # XXX license
+    # XXX author
     init.add_argument('name')
+
+    generate = subs.add_parser('generate', parents=[common])
+    generate.add_argument('--root')
 
     args = parser.parse_args(argv)
     ns = vars(args)
