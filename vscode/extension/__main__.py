@@ -2,27 +2,54 @@ import argparse
 import sys
 
 
+def cmd_init():
+    raise NotImplementedError
+
+
 #######################################
 # the script
 
+COMMANDS = {
+        'init': cmd_init,
+        }
+
+
 def parse_args(prog=sys.argv[0], argv=sys.argv[1:]):
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument('--show-traceback', dest='showtb', action='store_true')
+
     parser = argparse.ArgumentParser(
             prog=prog,
+            parents=[common],
             )
-    parser.add_argument('--show-traceback', dest='showtb', action='store_true')
+    subs = parser.add_subparsers(dest='cmd')
+
+    init = subs.add_parser('init', parents=[common])
 
     args = parser.parse_args(argv)
     ns = vars(args)
 
-    cmd = ns.pop('cmd', None)
+    cmd = ns.pop('cmd')
+    if not cmd:
+        parser.error('missing command')
 
     showtb = ns.pop('showtb')
 
     return showtb, cmd, ns
 
 
-def main(cmd):
-    raise NotImplementedError
+def main(cmd, *,
+         _commands=COMMANDS,
+         **kwargs
+         ):
+    if not cmd:
+        raise TypeError('missing cmd')
+    try:
+        run_cmd = _commands[cmd]
+    except KeyError:
+        raise ValueError(f'unsupported cmd {cmd!r}')
+
+    run_cmd(**kwargs)
 
 
 if __name__ == '__main__':
@@ -32,4 +59,7 @@ if __name__ == '__main__':
     except Exception as exc:
         if showtb:
             raise
-        sys.exit(f'ERROR: {exc}')
+        msg = str(exc)
+        if not msg:
+            msg = type(exc).__name__
+        sys.exit(f'ERROR: {msg}')
