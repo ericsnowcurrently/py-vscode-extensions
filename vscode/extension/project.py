@@ -225,10 +225,9 @@ def initialize(cfg, root=None, *,
 
 
 def _write_license(filename, cfg, *,
-                   _open=open,
+                   _write_all=util.write_all,
                    ):
     year = '2019'  # XXX
     author = cfg.author or 'the authors'
     text = f'Copyright {year} {author}\n\n' + get_license(cfg.license)
-    with _open(filename, 'w') as outfile:
-        outfile.write(text)
+    _write_all(filename, text)

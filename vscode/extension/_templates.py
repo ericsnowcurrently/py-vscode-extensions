@@ -23,7 +23,8 @@ UNESCAPED_RE = re.compile('''
 def apply_to_tree(kind, rootdir, ns, *,
                   _walk=os.walk,
                   _mkdirs=os.makedirs,
-                  _open=open,
+                  _read_all=util.read_all,
+                  _write_all=util.write_all,
                   ):
     templates = os.path.join(TEMPLATES, kind)
     for root, subdirs, files in _walk(templates):
@@ -41,12 +42,10 @@ def apply_to_tree(kind, rootdir, ns, *,
             source = os.path.join(root, name)
             target = os.path.join(rootdir, relroot, name)
             #logger.info(f'applying project template at {target!r}')
-            with _open(source) as infile:
-                template = infile.read()
+            template = _read_all(source)
             text = '\n'.join(
                     _apply_lines(source, template, ns))
-            with _open(target, 'w') as outfile:
-                outfile.write(text)
+            _write_all(target, text)
 
 
 def _apply_lines(filename, template, ns):
