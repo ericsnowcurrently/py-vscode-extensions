@@ -1,3 +1,4 @@
+import configparser
 import os
 import os.path
 
@@ -35,7 +36,10 @@ class Config:
             with _open(filename) as cfgfile:
                 return cls.from_file(cfgfile, _open=_open)
 
-        raise NotImplementedError
+        config = configparser.ConfigParser()
+        config.read_file(cfgfile)
+        raw = dict(config['vscode_ext'])
+        return cls(**raw)
 
     def __new__(cls, name, version=None, minvscode=None,
                 license=None, author=None,

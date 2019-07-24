@@ -16,11 +16,21 @@ def apply(kind, rootdir, ns):
             except FileExistsError:
                 pass
         for name in files:
+            if name.startswith('.') and name.endswith('.swp'):  # vim
+                continue
             source = os.path.join(root, name)
             target = os.path.join(rootdir, relroot, name)
             #logger.info(f'applying project template at {target!r}')
             with open(source) as infile:
                 template = infile.read()
-            text = template.format(**ns)
+            lines = []
+            try:
+                for line in template.splitlines():
+                    lines.append(
+                        line.format(**ns))
+            except Exception as exc:
+                raise Exception((f'problem applying template file {source!r} '
+                                 f'({type(exc).__name__}: {exc})'))
+            text = '\n'.join(lines)
             with open(target, 'w') as outfile:
                 outfile.write(text)

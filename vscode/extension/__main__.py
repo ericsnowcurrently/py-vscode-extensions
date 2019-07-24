@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from . import project
+from . import project, generated
 
 
 def cmd_init(root=None, *,
@@ -13,8 +13,11 @@ def cmd_init(root=None, *,
     _init(cfg, root)
 
 
-def cmd_generate(root=None):
-    raise NotImplementedError
+def cmd_generate(root=None, outdir=None, *,
+                 _generate=generated.generate,
+                 **kwargs
+                 ):
+    _generate(root, outdir, **kwargs)
 
 
 #######################################
@@ -46,6 +49,7 @@ def parse_args(prog=sys.argv[0], argv=sys.argv[1:]):
 
     generate = subs.add_parser('generate', parents=[common])
     generate.add_argument('--root')
+    generate.add_argument('--outdir')
 
     args = parser.parse_args(argv)
     ns = vars(args)

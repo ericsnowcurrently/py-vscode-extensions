@@ -1,22 +1,22 @@
-{
+{{
     "name": "{name}",
     "version": "{version}",
-    "author": {
+    "author": {{
         "name": "{author}"
-    },
+    }},
     "license": "{license}",
-    "engines": {
+    "engines": {{
         "vscode": "^{minvscode}"
-    },
+    }},
     "main": "./out/extension.js",
-	"scripts": {
+	"scripts": {{
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"pretest": "npm run compile",
 		"test": "node ./out/test/runTest.js"
-	},
-	"devDependencies": {
+	}},
+	"devDependencies": {{
 		"@types/glob": "^7.1.1",
 		"@types/mocha": "^5.2.6",
 		"@types/node": "^10.12.21",
@@ -26,5 +26,5 @@
 		"typescript": "^3.3.1",
 		"tslint": "^5.12.1",
 		"vscode-test": "^1.0.0-next.0"
-	}
-}
+	}}
+}}
