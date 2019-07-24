@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 
 from . import project, generated
@@ -29,9 +30,29 @@ COMMANDS = {
         }
 
 
-def parse_args(prog=sys.argv[0], argv=sys.argv[1:]):
+def get_env_var(name, default=None, *,
+                _env_get=(lambda *args: os.environ.get(*args)),
+                ):
+    return _env_get(f'PYVSC_{name}', default)
+
+
+def get_env_flag(name, *,
+                 _get_env_var=get_env_var,
+                 ):
+    value = (_get_env_var(name) or '').strip()
+    if value.lower() in ('', '0', 'f', 'false'):
+        return False
+    return True
+
+
+def parse_args(prog=sys.argv[0], argv=sys.argv[1:], *,
+               _get_env_flag=get_env_flag,
+               ):
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument('--show-traceback', dest='showtb', action='store_true')
+    common.add_argument('--show-traceback', dest='showtb',
+                        action='store_true', default=None)
+    common.add_argument('--no-show-traceback', dest='showtb',
+                        action='store_false', default=None)
 
     parser = argparse.ArgumentParser(
             prog=prog,
@@ -59,6 +80,8 @@ def parse_args(prog=sys.argv[0], argv=sys.argv[1:]):
         parser.error('missing command')
 
     showtb = ns.pop('showtb')
+    if showtb is None:
+        showtb = _get_env_flag('SHOW_TRACEBACK')
 
     return showtb, cmd, ns
 
