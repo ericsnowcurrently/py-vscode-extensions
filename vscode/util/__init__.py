@@ -7,5 +7,12 @@ from .classtools import (
         as_namedtuple,
         )
 from .coercion import (
-        coerce_str,
+        as_str,
+        as_int,
+        iter_sequence,
+        iter_mapping,
+        as_sequence,
+        as_readonly_sequence,
+        as_mapping,
+        as_readonly_mapping,
         )

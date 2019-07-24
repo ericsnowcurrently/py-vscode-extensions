@@ -51,11 +51,11 @@ class Config:
                 ):
         self = super(cls, cls).__new__(
                 cls,
-                name=util.coerce_str(name) or None,
-                version=util.coerce_str(version) or cls.VERSION,
-                minvscode=util.coerce_str(minvscode) or cls.MIN_VSCODE,
-                license=util.coerce_str(license).upper() or cls.LICENSE,
-                author=util.coerce_str(author) or '',
+                name=util.as_str(name) or None,
+                version=util.as_str(version) or cls.VERSION,
+                minvscode=util.as_str(minvscode) or cls.MIN_VSCODE,
+                license=util.as_str(license).upper() or cls.LICENSE,
+                author=util.as_str(author) or '',
                 )
         return self
 
@@ -112,7 +112,7 @@ class Files:
     def __new__(cls, root):
         if root:
             root = os.path.abspath(
-                    util.coerce_str(root))
+                    util.as_str(root))
         self = super(cls, cls).__new__(
                 cls,
                 root=root or None,
