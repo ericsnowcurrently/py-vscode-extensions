@@ -7,6 +7,9 @@ def coerce_str(value):
     return str(value)
 
 
+##################################
+# namedtuple
+
 def as_namedtuple(*fields):
     """A class decorator factory for a namedtuple with the given fields."""
     fields = ' '.join(fields)
@@ -31,7 +34,10 @@ class _NTBase:
 
     @classmethod
     def from_raw(cls, raw):
-        """Return an instance that matches the given value."""
+        """Return an instance that matches the given value.
+
+        The result (if not None) is guaranteed to be valid.
+        """
         if isinstance(raw, cls):
             return raw
         elif not raw:

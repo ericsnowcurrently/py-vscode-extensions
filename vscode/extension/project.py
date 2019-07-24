@@ -30,16 +30,21 @@ class Config:
     def from_file(cls, cfgfile, *,
                   _open=open,
                   ):
-        """Return a config matching the given setup.cfg file."""
+        """Return a config matching the given setup.cfg file.
+
+        The result is guaranteed to be valid.
+        """
         if isinstance(cfgfile, str):
             filename = cfgfile
             with _open(filename) as cfgfile:
-                return cls.from_file(cfgfile, _open=_open)
+                return cls.from_file(cfgfile)
 
-        config = configparser.ConfigParser()
-        config.read_file(cfgfile)
-        raw = dict(config['vscode_ext'])
-        return cls(**raw)
+        ini = configparser.ConfigParser()
+        ini.read_file(cfgfile)
+        raw = dict(ini['vscode_ext'])
+        self = cls(**raw)
+        self.validate()
+        return self
 
     def __new__(cls, name, version=None, minvscode=None,
                 license=None, author=None,
@@ -80,7 +85,7 @@ class Config:
         if isinstance(cfgfile, str):
             filename = cfgfile
             with _open(filename, 'w') as cfgfile:
-                return self.to_file(cfgfile, _open=_open)
+                return self.to_file(cfgfile)
 
         # XXX Use configfile.ConfigFile?
         text = CONFIG.format(**self._asdict())
@@ -92,6 +97,17 @@ class Files:
     """Info about files/directories for a single extension project."""
 
     __slots__ = ()
+
+    @classmethod
+    def from_raw(cls, raw):
+        """Return a Files that matches the given value.
+
+        The result (if not None) is guaranteed to be valid.
+        """
+        if isinstance(raw, str):
+            return cls(raw)
+        else:
+            return super(cls, cls).from_raw(raw)
 
     def __new__(cls, root):
         if root:
@@ -137,10 +153,36 @@ class Info:
     CONFIG = Config
     FILES = Files
 
+    @classmethod
+    def from_raw(cls, raw, **kwargs):
+        """Return an Info that matches the given value.
+
+        The result (if not None) is guaranteed to be valid.
+        """
+        try:
+            return cls.from_files(raw, **kwargs)
+        except ValueError:
+            return super(cls, cls).from_raw(raw)
+
+    @classmethod
+    def from_files(cls, files, *,
+                   cfg=None,
+                   _cwd=os.getcwd(),
+                   ):
+        """Return info for the project at the given root.
+
+        The result is guaranteed to be valid.
+        """
+        files = cls.FILES.from_raw(files or _cwd)
+        # No need to validate.
+        if not cfg:
+            cfg = cls.CONFIG.from_file(files.cfgfile)
+            # No need to validate.
+        elif not isinstance(cfg, cls.CONFIG):
+                raise ValueError(f'expected {cls.CONFIG}, got {cfg!r}')
+        return cls(cfg, files)
+
     def __new__(cls, cfg, files):
-        if isinstance(files, str):
-            root = files
-            files = cls.FILES(root)
         self = super(cls, cls).__new__(
                 cls,
                 cfg=cls.CONFIG.from_raw(cfg),
@@ -161,29 +203,32 @@ class Info:
         self.files.validate()
 
 
-def _init_license(filename, cfg):
-    year = '2019'  # XXX
-    author = cfg.author or 'the authors'
-    text = get_license(cfg.license)
-    with open(filename, 'w') as outfile:
-        outfile.write(f'Copyright {year} {author}\n\n')
-        outfile.write(text)
-
-
 def initialize(cfg, root=None, *,
                _cwd=os.getcwd(),
-               _apply_templates=_templates.apply,
-               _init_license=_init_license,
+               _apply_templates=_templates.apply_to_tree,
+               _init_license=None,
                ):
     """Initalize the extension project directory with the given config."""
     cfg = Config.from_raw(cfg)
-    if not root:
-        root = _cwd
-    info = Info(cfg, root)
+    info = Info.from_files(root, cfg=cfg)
     # No need to validate.
+
 
     # Create the files and directories.
     _apply_templates('project', info.root, cfg._asdict())
-    _init_license(info.LICENSE, cfg)
+    (_init_license or _write_license)(
+            info.LICENSE,
+            cfg,
+            )
 
     return info
+
+
+def _write_license(filename, cfg, *,
+                   _open=open,
+                   ):
+    year = '2019'  # XXX
+    author = cfg.author or 'the authors'
+    text = f'Copyright {year} {author}\n\n' + get_license(cfg.license)
+    with _open(filename, 'w') as outfile:
+        outfile.write(text)

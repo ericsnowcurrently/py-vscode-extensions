@@ -1,18 +1,38 @@
 import os
 import os.path
+import re
 
+from .. import util
 from . import TEMPLATES
 
 
-def apply(kind, rootdir, ns):
+UNESCAPED_RE = re.compile('''
+        (?:
+          (?: ^ | [^{] )
+          [{]
+          (?: [^{] | $ )
+          ) |
+        (?:
+          (?: ^ | [^}] )
+          [}]
+          (?: [^}] | $)
+          )
+        ''', re.VERBOSE)
+
+
+def apply_to_tree(kind, rootdir, ns, *,
+                  _walk=os.walk,
+                  _mkdirs=os.makedirs,
+                  _open=open,
+                  ):
     templates = os.path.join(TEMPLATES, kind)
-    for root, subdirs, files in os.walk(templates):
+    for root, subdirs, files in _walk(templates):
         relroot = root[len(templates):].lstrip(os.path.sep)
         for name in subdirs:
             dirname = os.path.join(rootdir, relroot, name)
             #logger.info(f'creating project subdirectory at {dirname!r}')
             try:
-                os.makedirs(dirname)
+                _mkdirs(dirname)
             except FileExistsError:
                 pass
         for name in files:
@@ -21,16 +41,21 @@ def apply(kind, rootdir, ns):
             source = os.path.join(root, name)
             target = os.path.join(rootdir, relroot, name)
             #logger.info(f'applying project template at {target!r}')
-            with open(source) as infile:
+            with _open(source) as infile:
                 template = infile.read()
-            lines = []
-            try:
-                for line in template.splitlines():
-                    lines.append(
-                        line.format(**ns))
-            except Exception as exc:
-                raise Exception((f'problem applying template file {source!r} '
-                                 f'({type(exc).__name__}: {exc})'))
-            text = '\n'.join(lines)
-            with open(target, 'w') as outfile:
+            text = '\n'.join(
+                    _apply_lines(source, template, ns))
+            with _open(target, 'w') as outfile:
                 outfile.write(text)
+
+
+def _apply_lines(filename, template, ns):
+    for line in template.splitlines():
+        try:
+            yield line.format(**ns)
+        except Exception as exc:
+            msg = (f'problem applying template file {filename!r} '
+                   f'({type(exc).__name__}: {exc})')
+            if type(exc) is ValueError and UNESCAPED_RE.search(line):
+                msg += ' (try escaping the bracket in the template)'
+            raise Exception(msg)
