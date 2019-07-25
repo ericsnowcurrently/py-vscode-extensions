@@ -6,6 +6,8 @@ from collections import namedtuple
 
 def as_namedtuple(*fields):
     """A class decorator factory for a namedtuple with the given fields."""
+    if len(fields) == 1 and not isinstance(fields[0], str):
+        fields = fields[0]
     fields = ' '.join(fields)
     def decorator(cls):
         assert cls.__bases__ == (object,)
