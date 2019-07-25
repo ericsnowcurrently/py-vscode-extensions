@@ -117,10 +117,11 @@ class Files:
         else:
             return super(cls, cls).from_raw(raw)
 
-    def __new__(cls, root):
-        if root:
-            root = os.path.abspath(
-                    util.as_str(root))
+    def __new__(cls, root, *,
+                _cwd=os.getcwd(),
+                ):
+        root = util.resolve_filename(
+                util.as_str(root))
         self = super(cls, cls).__new__(
                 cls,
                 root=root or None,
@@ -175,7 +176,6 @@ class Project:
     @classmethod
     def from_files(cls, files, *,
                    cfg=None,
-                   _cwd=os.getcwd(),
                    ):
         """Return info for the project at the given root.
 

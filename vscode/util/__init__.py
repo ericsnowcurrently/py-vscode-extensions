@@ -1,5 +1,6 @@
 # Pull in exported names.
 from .os import (
+        resolve as resolve_filename,
         read_all,
         write_all,
         )

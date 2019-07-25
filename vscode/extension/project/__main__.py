@@ -1,5 +1,6 @@
 import argparse
 import os
+import os.path
 import sys
 
 from . import lifecycle, info
@@ -61,16 +62,16 @@ def parse_args(prog=sys.argv[0], argv=sys.argv[1:], *,
     subs = parser.add_subparsers(dest='cmd')
 
     init = subs.add_parser('init', parents=[common])
-    init.add_argument('--root')
+    init.add_argument('--name')
     # XXX version
     # XXX minvscode
     # XXX license
     # XXX author
-    init.add_argument('name')
+    init.add_argument('root')
 
     generate = subs.add_parser('generate', parents=[common])
-    generate.add_argument('--root')
     generate.add_argument('--outdir')
+    generate.add_argument('root')
 
     args = parser.parse_args(argv)
     ns = vars(args)
@@ -82,6 +83,14 @@ def parse_args(prog=sys.argv[0], argv=sys.argv[1:], *,
     showtb = ns.pop('showtb')
     if showtb is None:
         showtb = _get_env_flag('SHOW_TRACEBACK')
+
+    args.root = args.root or '.'
+
+    if cmd == 'init':
+        if not args.name:
+            if args.root == '.' or args.root.endswith(os.path.sep):
+                parser.error('missing project name')
+            args.name = os.path.basename(args.root)
 
     return showtb, cmd, ns
 
