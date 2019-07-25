@@ -28,3 +28,7 @@ from .validation import (
         validate_sequence,
         validator,
         )
+from ._person import (
+        parse_person,
+        Person,
+        )
