@@ -20,3 +20,6 @@ from .git import (
         get_config as get_git_config,
         get_committer as get_git_committer,
         )
+from .regex import (
+        match as match_regex,
+        )
