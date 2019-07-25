@@ -2,9 +2,7 @@ import configparser
 import os
 import os.path
 
-from .. import util
-from . import _templates
-from ._license import get_license
+from vscode import util
 
 
 CONFIG = '''
@@ -155,7 +153,7 @@ class Files:
 
 
 @util.as_namedtuple('cfg files')
-class Info:
+class Project:
     """Info for a single extension project."""
 
     __slots__ = ()
@@ -165,7 +163,7 @@ class Info:
 
     @classmethod
     def from_raw(cls, raw, **kwargs):
-        """Return an Info that matches the given value.
+        """Return a projectthat matches the given value.
 
         The result (if not None) is guaranteed to be valid.
         """
@@ -202,7 +200,7 @@ class Info:
 
     def __getattr__(self, name):
         try:
-            return super(Info, self).__getattr__(name)
+            return super(Project, self).__getattr__(name)
         except AttributeError:
             return getattr(self.files, name)
 
@@ -214,32 +212,3 @@ class Info:
         if not self.files:
             raise TypeError('missing files')
         self.files.validate()
-
-
-def initialize(cfg, root=None, *,
-               _apply_templates=_templates.apply_to_tree,
-               _init_license=None,
-               ):
-    """Initalize the extension project directory with the given config."""
-    cfg = Config.from_raw(cfg)
-    if root and root.endswith(os.path.sep):
-        root = os.path.join(root, cfg.name)
-    info = Info.from_files(root, cfg=cfg)
-
-    # Create the files and directories.
-    _apply_templates('project', info.root, cfg._asdict())
-    (_init_license or _write_license)(
-            info.LICENSE,
-            cfg,
-            )
-
-    return info
-
-
-def _write_license(filename, cfg, *,
-                   _write_all=util.write_all,
-                   ):
-    year = '2019'  # XXX
-    author = cfg.author or 'the authors'
-    text = f'Copyright {year} {author}\n\n' + get_license(cfg.license)
-    _write_all(filename, text)

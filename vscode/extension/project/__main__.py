@@ -2,20 +2,20 @@ import argparse
 import os
 import sys
 
-from . import project, generated
+from . import lifecycle, info
 
 
 def cmd_init(root=None, *,
-             _init=project.initialize,
+             _init=lifecycle.initialize,
              **kwargs
              ):
-    cfg = project.Config(**kwargs)
+    cfg = info.Config(**kwargs)
     cfg.validate()
     _init(cfg, root)
 
 
 def cmd_generate(root=None, outdir=None, *,
-                 _generate=generated.generate,
+                 _generate=lifecycle.generate_extension,
                  **kwargs
                  ):
     _generate(root, outdir, **kwargs)

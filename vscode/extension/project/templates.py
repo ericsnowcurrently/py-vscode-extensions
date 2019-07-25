@@ -2,8 +2,8 @@ import os
 import os.path
 import re
 
-from .. import util
-from . import TEMPLATES
+from vscode import util
+from . import TEMPLATES_DIR
 
 
 UNESCAPED_RE = re.compile('''
@@ -20,13 +20,19 @@ UNESCAPED_RE = re.compile('''
         ''', re.VERBOSE)
 
 
+def resolve(kind, *path):
+    """Return the template's filename."""
+    return os.path.join(TEMPLATES_DIR, kind, *path)
+
+
 def apply_to_tree(kind, rootdir, ns, *,
                   _walk=os.walk,
                   _mkdirs=os.makedirs,
                   _read_all=util.read_all,
                   _write_all=util.write_all,
                   ):
-    templates = os.path.join(TEMPLATES, kind)
+    """Apply the given namespace to all templates for the specified kind."""
+    templates = resolve(kind)
     for root, subdirs, files in _walk(templates):
         relroot = root[len(templates):].lstrip(os.path.sep)
         for name in subdirs:

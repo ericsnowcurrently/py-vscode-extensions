@@ -3,20 +3,40 @@ import os
 import os.path
 import shutil
 
-from .. import util
-from . import project, _templates
+from vscode import util
+from . import templates, info, license
 
 
 OUT_DIR = '.build'
 #OUT_DIR = '.extension'
 
 
-def generate(project=None, outdir=None, *,
-             _project_from_raw=project.Info.from_raw,
-             _abspath=os.path.abspath,
-             _projfiles=None,
-             _gen=None,
-             ):
+def initialize(cfg, root=None, *,
+               _apply_templates=templates.apply_to_tree,
+               _init_license=None,
+               ):
+    """Initalize the extension project directory with the given config."""
+    cfg = info.Config.from_raw(cfg)
+    if root and root.endswith(os.path.sep):
+        root = os.path.join(root, cfg.name)
+    proj = info.Project.from_files(root, cfg=cfg)
+
+    # Create the files and directories.
+    _apply_templates('project', proj.root, cfg._asdict())
+    (_init_license or _write_license)(
+            proj.LICENSE,
+            cfg,
+            )
+
+    return proj
+
+
+def generate_extension(project=None, outdir=None, *,
+                       _project_from_raw=info.Project.from_raw,
+                       _abspath=os.path.abspath,
+                       _projfiles=None,
+                       _gen=None,
+                       ):
     """Produce all needed files to build an extension from the given root."""
     project = _project_from_raw(project)
     # No need to validate.
@@ -36,7 +56,7 @@ def generate(project=None, outdir=None, *,
 
 def _generate(root, cfg, projfiles, outdir, *,
              _mkdirs=os.makedirs,
-             _apply_templates=_templates.apply_to_tree,
+             _apply_templates=templates.apply_to_tree,
              _update_manifest=None,
              _copy_file=shutil.copyfile,
              _fix_manifest=(lambda c, o: _fix_manifest(c, o)),
@@ -86,3 +106,13 @@ def _get_project_files(root, *,
             continue
         names.append(name)
     return names
+
+
+def _write_license(filename, cfg, *,
+                   _write_all=util.write_all,
+                   _get_license=license.get_license,
+                   ):
+    year = '2019'  # XXX
+    author = cfg.author or 'the authors'
+    text = f'Copyright {year} {author}\n\n' + _get_license(cfg.license)
+    _write_all(filename, text)
