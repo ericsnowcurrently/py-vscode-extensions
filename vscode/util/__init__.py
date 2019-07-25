@@ -23,3 +23,8 @@ from .git import (
 from .regex import (
         match as match_regex,
         )
+from .validation import (
+        validate,
+        validate_sequence,
+        validator,
+        )
