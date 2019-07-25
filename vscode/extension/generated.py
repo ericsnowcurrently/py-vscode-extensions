@@ -1,7 +1,9 @@
+import json
 import os
 import os.path
 import shutil
 
+from .. import util
 from . import project, _templates
 
 
@@ -33,15 +35,21 @@ def generate(project=None, outdir=None, *,
 
 
 def _generate(root, cfg, projfiles, outdir, *,
-             _apply_templates=_templates.apply_to_tree,
              _mkdirs=os.makedirs,
+             _apply_templates=_templates.apply_to_tree,
+             _update_manifest=None,
              _copy_file=shutil.copyfile,
+             _fix_manifest=(lambda c, o: _fix_manifest(c, o)),
              ):
     try:
         _mkdirs(outdir)
     except FileExistsError:
         pass
     _apply_templates('extension', outdir, cfg._asdict())
+    (_update_manifest or _fix_manifest)(
+            cfg,
+            outdir,
+            )
 
     # Copy over relevant project files.
     for name in projfiles:
@@ -50,7 +58,23 @@ def _generate(root, cfg, projfiles, outdir, *,
         source = os.path.join(root, name)
         target = os.path.join(outdir, name)
         _copy_file(source, target)
-    # XXX Fix package.json.
+
+    # Apply final fixes.
+    _fix_manifest(cfg, outdir)
+
+
+def _fix_manifest(cfg, outdir, *,
+                  _editing=util.editing_json_file,
+                  ):
+    filename = os.path.join(outdir, 'package.json')
+    with _editing(filename) as data:
+        if cfg.author:
+            author = {
+                    'name': cfg.author.name,
+                    }
+            if cfg.author.email:
+                author['email'] = cfg.author.email
+            data['author'] = author
 
 
 def _get_project_files(root, *,

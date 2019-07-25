@@ -1,9 +1,7 @@
 {{
     "name": "{name}",
+    "publisher": "",
     "version": "{version}",
-    "author": {{
-        "name": "{author}"
-    }},
     "license": "{license}",
     "engines": {{
         "vscode": "^{minvscode}"
