@@ -23,6 +23,9 @@ from .git import (
 from .regex import (
         match as match_regex,
         )
+from .json import (
+        editing_file as editing_json_file,
+        )
 from .validation import (
         validate,
         validate_sequence,
