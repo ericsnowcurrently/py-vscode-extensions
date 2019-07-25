@@ -16,7 +16,14 @@ license={license}
 author={author}
 '''
 
-@util.as_namedtuple('name version minvscode license author')
+
+@util.as_namedtuple(
+        'name',
+        'version',
+        'minvscode',
+        'license',
+        'author',
+        )
 class Config:
     """The configuration for a single extension project."""
 
@@ -47,15 +54,18 @@ class Config:
         return self
 
     def __new__(cls, name, version=None, minvscode=None,
-                license=None, author=None,
+                license=None, author=None, *,
+                _get_author=util.get_git_committer,
                 ):
+        if not author:
+            author = _get_author()
         self = super(cls, cls).__new__(
                 cls,
                 name=util.as_str(name) or None,
                 version=util.as_str(version) or cls.VERSION,
                 minvscode=util.as_str(minvscode) or cls.MIN_VSCODE,
                 license=util.as_str(license).upper() or cls.LICENSE,
-                author=util.as_str(author) or '',
+                author=util.Person.from_raw(author) if author else '',
                 )
         return self
 
@@ -191,7 +201,10 @@ class Info:
         return self
 
     def __getattr__(self, name):
-        return getattr(self.files, name)
+        try:
+            return super(Info, self).__getattr__(name)
+        except AttributeError:
+            return getattr(self.files, name)
 
     def validate(self):
         if not self.cfg:
