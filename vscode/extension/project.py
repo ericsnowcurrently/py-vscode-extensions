@@ -217,15 +217,14 @@ class Info:
 
 
 def initialize(cfg, root=None, *,
-               _cwd=os.getcwd(),
                _apply_templates=_templates.apply_to_tree,
                _init_license=None,
                ):
     """Initalize the extension project directory with the given config."""
     cfg = Config.from_raw(cfg)
+    if root and root.endswith(os.path.sep):
+        root = os.path.join(root, cfg.name)
     info = Info.from_files(root, cfg=cfg)
-    # No need to validate.
-
 
     # Create the files and directories.
     _apply_templates('project', info.root, cfg._asdict())
