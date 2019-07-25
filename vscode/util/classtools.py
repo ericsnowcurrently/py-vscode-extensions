@@ -10,6 +10,7 @@ def as_namedtuple(*fields):
         fields = fields[0]
     fields = ' '.join(fields)
     def decorator(cls):
+        # XXX Support preserving bases?
         assert cls.__bases__ == (object,)
         bases = (
             #cls,
@@ -17,8 +18,17 @@ def as_namedtuple(*fields):
             _NTFixes,
             namedtuple(cls.__name__, fields),
             )
-        #ns = {'__slots__': True}
+
+        #ns = {'__slots__': ()}
         ns = dict(vars(cls))
+        slots = ns.get('__slots__')
+        if slots:  # not allowed on tuple subclasses
+            ns['__slots__'] = ()
+            for name in slots:
+                del ns[name]  # Clear the descriptor.
+            slotsbase = _new_slots_base(slots)
+            bases = (slotsbase,) + bases
+
         # Note: This ignores any metaclass
         return type(cls.__name__, bases, ns)
     return decorator
@@ -73,3 +83,31 @@ class _NTFixes:
         #if hasattr(obj, 'validate'):
         #    obj.validate()
         return obj
+
+
+def _new_slots_base(slots):
+    # The state is stored here in a closure.
+    instslots = {n: {} for n in slots}
+    class _SlotsBase:
+        __slots__ = ()
+        def __getattr__(self, name):
+            # XXX super?
+            try:
+                return instslots[name][id(self)]
+            except KeyError:
+                raise AttributeError(name)
+        def __setattr__(self, name, value):
+            # XXX super?
+            try:
+                insts = instslots[name]
+            except KeyError:
+                raise AttributeError(name)
+            insts[id(self)] = value
+        def __delattr__(self, name):
+            # XXX super?
+            try:
+                insts = instslots[name]
+                del insts[id(self)]
+            except KeyError:
+                raise AttributeError(name)
+    return _SlotsBase
