@@ -5,6 +5,7 @@ from .os import (
         write_all,
         )
 from .classtools import (
+        Slot,
         as_namedtuple,
         )
 from .coercion import (

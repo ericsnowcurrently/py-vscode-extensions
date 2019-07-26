@@ -57,7 +57,7 @@ class Config:
                 ):
         if not author:
             author = _get_author()
-        self = super(cls, cls).__new__(
+        self = super(Config, cls).__new__(
                 cls,
                 name=util.as_str(name) or None,
                 version=util.as_str(version) or cls.VERSION,
@@ -115,14 +115,14 @@ class Files:
         if isinstance(raw, str):
             return cls(raw)
         else:
-            return super(cls, cls).from_raw(raw)
+            return super(Files, cls).from_raw(raw)
 
     def __new__(cls, root, *,
                 _cwd=os.getcwd(),
                 ):
         root = util.resolve_filename(
                 util.as_str(root))
-        self = super(cls, cls).__new__(
+        self = super(Files, cls).__new__(
                 cls,
                 root=root or None,
                 )
@@ -171,7 +171,7 @@ class Project:
         try:
             return cls.from_files(raw, **kwargs)
         except ValueError:
-            return super(cls, cls).from_raw(raw)
+            return super(Project, cls).from_raw(raw)
 
     @classmethod
     def from_files(cls, files, *,
@@ -191,7 +191,7 @@ class Project:
         return cls(cfg, files)
 
     def __new__(cls, cfg, files):
-        self = super(cls, cls).__new__(
+        self = super(Project, cls).__new__(
                 cls,
                 cfg=cls.CONFIG.from_raw(cfg),
                 files=cls.FILES.from_raw(files),

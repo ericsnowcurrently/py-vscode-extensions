@@ -50,7 +50,7 @@ class Person:
         if isinstance(raw, str):
             return cls.parse(raw)
         else:
-            return super(cls, cls).from_raw(raw)
+            return super(Person, cls).from_raw(raw)
 
     @classmethod
     def parse(cls, text):
@@ -66,7 +66,7 @@ class Person:
         return self
 
     def __new__(cls, name, email=None, url=None):
-        self = super(cls, cls).__new__(
+        self = super(Person, cls).__new__(
                 cls,
                 name=as_str(name) or None,
                 email=as_str(email) or None,
