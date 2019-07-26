@@ -37,3 +37,9 @@ from ._person import (
         parse_person,
         Person,
         )
+from .version import (
+        SimpleVersion,
+        Version,
+        SemVer,
+        VersionSpec,
+        )
