@@ -1,6 +1,15 @@
+from .net import EMAIL, URL
+from .regex import match
 
 
-def validate(value, *, kind=None, options=None):
+def validator(kind=None, options=None):
+    """Return a wrapper around validate()."""
+    def wrapper(value):
+        return validate(value, kind=kind, options=options)
+    return wrapper
+
+
+def validate(value, name=None, *, kind=None, options=None):
     """Return the value after ensuring it is valid."""
     if kind is None:
         if options is None:
@@ -9,79 +18,121 @@ def validate(value, *, kind=None, options=None):
         raise ValueError('expected kind or options, got both')
 
     if options:
-        _validate_options(value, options)
-        return value
+        err = _validate_by_options(value, options)
+    else:
+        err = _validate_by_kind(value, kind)
+    if err:
+        if name:
+            err = f'({name}) {err}'
+        raise ValueError(err)
+    return value
 
+
+def validate_sequence(items, name=None, *, kind=None, options=None):
+    """Validate each item in the sequence."""
+    err = _validate_sequence(items, kind, options)
+    if err:
+        if name:
+            err = f'({name}) {err}'
+        raise ValueError(err)
+    return items
+
+
+def _validate_sequence(items, kind, options):
+    for item in items:
+        err = validate(item, kind=kind, options=options)
+        if err:
+            return err
+        if item is None:
+            return 'missing item'
+    else:
+        return None
+
+
+def _validate_by_kind(value, kind):
     if isinstance(kind, type):
         if type(value) is not kind:
-            raise ValueError(f'expected {kind.__name__}, got {value!r}')
+            return f'expected {kind.__name__}, got {value!r}'
+
     elif callable(kind):
-        kind(value)
+        return kind(value)
+
     elif not isinstance(kind, str):
         raise ValueError(f'unsupported kind {kind!r}')
     elif kind.startswith('[') and kind.endswith(']'):
         kind = kind[1:-1]
-        validate_sequence(value, kind=kind)
-    else:
-        _validate_string(value, kind)
-    return value
+        return _validate_sequence(value, kind, ())
+    elif isinstance(value, str):
+        return _validate_string(value, kind)
+
+    elif value is not None:
+        return f'unsupported value {value!r}'
+
+    return None
 
 
-def validate_sequence(items, *, kind=None, options=None):
-    """Validate each item in the sequence."""
-    for item in items:
-        validate(item, kind=kind, options=options)
-
-
-def _validate_options(value, options):
+def _validate_by_options(value, options):
     for opt in options:
         if isinstance(opt, type):
             if type(value) is opt:
-                return
+                return None
         elif callable(opt):
             try:
                 opt(value)
             except (TypeError, ValueError):
                 continue
-            return
+            return None
         elif value == opt:
-            return
+            return None
     else:
         if len(options) == 1:
             opt = options[0]
-            raise ValueError(f'expected {opt!r}, got {value!r}')
+            return f'expected {opt!r}, got {value!r}'
         else:
-            raise ValueError(f'expected one of several options, got {value!r}')
+            return f'expected one of several options, got {value!r}'
 
 
 def _validate_string(value, kind):
     if kind == 'nonempty':
-        raise NotImplementedError
+        if not value:
+            return f'expected non-empty string, got {value!r}'
+
+    #elif not value:
+    #    return None
     elif kind == 'identifier':
-        raise NotImplementedError
+        if not value.isidentifier():
+            return f'expected identifier, got {value!r}'
     elif kind == 'filename':
-        raise NotImplementedError
+        # XXX Be more specific?
+        if not value:
+            return f'expected non-empty string, got {value!r}'
     elif kind == 'uri':
-        # XXX finish
-        return
+        if not match(URL, value):
+            return f'expected URL, got {value!r}'
     elif kind == 'email':
-        # XXX finish
-        return
+        if not match(EMAIL, value):
+            return f'expected email address, got {value!r}'
     elif kind == 'license':
-        raise NotImplementedError
+        # XXX Be more specific?
+        if not value:
+            return f'expected non-empty string, got {value!r}'
 
     # app-specific
+    elif kind == 'npm-script':
+        # XXX Be more specific?
+        if not value:
+            return f'expected non-empty string, got {value!r}'
     elif kind == 'npm-module':
-        raise NotImplementedError
+        # XXX Be more specific?
+        if not value:
+            return f'expected non-empty string, got {value!r}'
     elif kind == 'extension-id':
-        raise NotImplementedError
+        # XXX Be more specific?
+        if not value:
+            return f'expected non-empty string, got {value!r}'
     elif kind == 'event':
-        raise NotImplementedError
+        # XXX Be more specific?
+        if not value:
+            return f'expected non-empty string, got {value!r}'
     else:
         raise ValueError(f'unsupported kind {kind!r}')
-
-
-def validator(kind=None, options=None):
-    """Return a wrapper around validate()."""
-    def wrapper(value):
-        return validate(value, kind=kind, options=options)

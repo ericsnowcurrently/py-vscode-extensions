@@ -1,3 +1,5 @@
+import types
+
 
 def as_str(raw):
     """Return a string for the given raw value."""
