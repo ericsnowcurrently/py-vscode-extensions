@@ -1,13 +1,11 @@
+import configparser
 import os
 import os.path
 
 from .. import util
-from . import TEMPLATES
+from . import _templates
+from ._license import get_license
 
-
-TEMPLATES = os.path.join(TEMPLATES, 'project')
-
-BUILD_DIR = '.build'
 
 CONFIG = '''
 [vscode_ext]
@@ -17,12 +15,6 @@ minvscode={minvscode}
 license={license}
 author={author}
 '''
-
-LICENSES = {
-        # XXX copy a file or download
-        'MIT': '<license>',
-        }
-
 
 @util.as_namedtuple('name version minvscode license author')
 class Config:
@@ -44,7 +36,10 @@ class Config:
             with _open(filename) as cfgfile:
                 return cls.from_file(cfgfile, _open=_open)
 
-        raise NotImplementedError
+        config = configparser.ConfigParser()
+        config.read_file(cfgfile)
+        raw = dict(config['vscode_ext'])
+        return cls(**raw)
 
     def __new__(cls, name, version=None, minvscode=None,
                 license=None, author=None,
@@ -113,10 +108,6 @@ class Files:
         return os.path.join(self.root, 'src')
 
     @property
-    def builddir(self):
-        return os.path.join(self.root, BUILD_DIR)
-
-    @property
     def README(self):
         return os.path.join(self.root, 'README.md')
 
@@ -170,35 +161,10 @@ class Info:
         self.files.validate()
 
 
-def _apply_templates(rootdir, ns):
-    for root, subdirs, files in os.walk(TEMPLATES):
-        relroot = root[len(TEMPLATES):].lstrip(os.path.sep)
-        for name in subdirs:
-            dirname = os.path.join(rootdir, relroot, name)
-            #logger.info(f'creating project subdirectory at {dirname!r}')
-            try:
-                os.makedirs(dirname)
-            except FileExistsError:
-                pass
-        for name in files:
-            source = os.path.join(root, name)
-            target = os.path.join(rootdir, relroot, name)
-            #logger.info(f'applying project template at {target!r}')
-            with open(source) as infile:
-                template = infile.read()
-            text = template.format(**ns)
-            with open(target, 'w') as outfile:
-                outfile.write(text)
-
-
-def _get_license(name):
-    return LICENSES[name]
-
-
 def _init_license(filename, cfg):
     year = '2019'  # XXX
     author = cfg.author or 'the authors'
-    text = _get_license(cfg.license)
+    text = get_license(cfg.license)
     with open(filename, 'w') as outfile:
         outfile.write(f'Copyright {year} {author}\n\n')
         outfile.write(text)
@@ -206,7 +172,7 @@ def _init_license(filename, cfg):
 
 def initialize(cfg, root=None, *,
                _cwd=os.getcwd(),
-               _apply_templates=_apply_templates,
+               _apply_templates=_templates.apply,
                _init_license=_init_license,
                ):
     """Initalize the extension project directory with the given config."""
@@ -217,7 +183,7 @@ def initialize(cfg, root=None, *,
     # No need to validate.
 
     # Create the files and directories.
-    _apply_templates(info.root, cfg._asdict())
+    _apply_templates('project', info.root, cfg._asdict())
     _init_license(info.LICENSE, cfg)
 
     return info
