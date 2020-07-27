@@ -3,6 +3,10 @@
     "publisher": "{publisher}",
     "version": "{version}",
     "license": "{license}",
+    "repository": {{
+        "type": "git",
+        "url": "{repo}"
+    }},
     "engines": {{
         "vscode": "^{minvscode}"
     }},

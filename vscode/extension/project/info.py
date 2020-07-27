@@ -13,6 +13,7 @@ minvscode={minvscode}
 license={license}
 author={author}
 publisher={publisher}
+repo={repo}
 '''
 
 
@@ -23,6 +24,7 @@ publisher={publisher}
         'license',
         'author',
         'publisher',
+        'repo',
         )
 class Config:
     """The configuration for a single extension project."""
@@ -33,6 +35,7 @@ class Config:
     MIN_VSCODE = '1.36.0'  # 2017-07-23
     LICENSE = 'MIT'
     PUBLISHER = '???'
+    REPO = '???'
 
     @classmethod
     def from_file(cls, cfgfile, *,
@@ -54,12 +57,25 @@ class Config:
         self.validate()
         return self
 
-    def __new__(cls, name, version=None, minvscode=None,
-                license=None, author=None, publisher=None, *,
+    def __new__(cls,
+                name,
+                version=None,
+                minvscode=None,
+                license=None,
+                author=None,
+                publisher=None,
+                repo=None,
+                *,
                 _get_author=util.get_git_committer,
+                _get_repo=util.get_git_repo_url,
                 ):
         if not author:
             author = _get_author()
+        if not repo:
+            repo = _get_repo()
+            if not repo:
+                gh_user = '???'
+                repo = f'https://github.com/{gh_user}/{name}'
         self = super(Config, cls).__new__(
                 cls,
                 name=util.as_str(name) or None,
@@ -68,6 +84,7 @@ class Config:
                 license=util.as_str(license).upper() or cls.LICENSE,
                 author=util.Person.from_raw(author) if author else '',
                 publisher=util.as_str(publisher) or cls.PUBLISHER,
+                repo=util.as_str(repo) or cls.REPO,
                 )
         return self
 
