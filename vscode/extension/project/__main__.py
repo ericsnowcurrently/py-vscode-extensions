@@ -9,23 +9,33 @@ from . import lifecycle, info
 logger = logging.getLogger(__name__)
 
 
+def _new_config(**kwargs):
+    cfg = info.Config(**kwargs)
+    cfg.validate()
+    return cfg
+
+
 #######################################
 # commands
 
 def cmd_init(root=None, *,
+             _new_config=_new_config,
              _init=lifecycle.initialize,
              **kwargs
              ):
-    cfg = info.Config(**kwargs)
-    cfg.validate()
+    logger.info(f'seting up the project at {root or "."} ...')
+    cfg = _new_config(**kwargs)
     _init(cfg, root)
+    logger.info('done!')
 
 
 def cmd_generate(root=None, outdir=None, *,
                  _generate=lifecycle.generate_extension,
                  **kwargs
                  ):
+    logger.info(f'generating the extension in {root or "."}/build/ ...')
     _generate(root, outdir, **kwargs)
+    logger.info('done!')
 
 
 COMMANDS = {
@@ -56,7 +66,10 @@ def parse_args(prog=sys.argv[0], argv=sys.argv[1:]):
     )
     subs = parser.add_subparsers(dest='cmd')
 
-    sub_init = subs.add_parser('init', parents=[common])
+    sub_init = subs.add_parser('init',
+                               parents=[common],
+                               description='Set up the project (add setup.py, setup.cfg, etc.)',
+                               )
     sub_init.add_argument('--name')
     # XXX version
     # XXX minvscode
@@ -64,7 +77,10 @@ def parse_args(prog=sys.argv[0], argv=sys.argv[1:]):
     # XXX author
     sub_init.add_argument('root')
 
-    sub_generate = subs.add_parser('generate', parents=[common])
+    sub_generate = subs.add_parser('generate',
+                                   parents=[common],
+                                   description='Produce the extension code for the project (in the "build" directory)',
+                                   )
     sub_generate.add_argument('--outdir')
     sub_generate.add_argument('root')
 
