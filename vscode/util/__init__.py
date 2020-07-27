@@ -6,6 +6,8 @@ from .os import (
         )
 from .classtools import (
         Slot,
+        HasRawFactory,
+        classonly,
         as_namedtuple,
         )
 from .coercion import (

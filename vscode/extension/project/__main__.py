@@ -1,10 +1,16 @@
-import argparse
+import logging
 import os
 import os.path
 import sys
 
 from . import lifecycle, info
 
+
+logger = logging.getLogger(__name__)
+
+
+#######################################
+# commands
 
 def cmd_init(root=None, *,
              _init=lifecycle.initialize,
@@ -22,67 +28,56 @@ def cmd_generate(root=None, outdir=None, *,
     _generate(root, outdir, **kwargs)
 
 
+COMMANDS = {
+    'init': cmd_init,
+    'generate': cmd_generate,
+}
+
+
 #######################################
 # the script
 
-COMMANDS = {
-        'init': cmd_init,
-        'generate': cmd_generate,
-        }
+def parse_args(prog=sys.argv[0], argv=sys.argv[1:]):
+    import argparse
+    from vscode.util.scriptutil import (
+        add_verbosity_cli,
+        add_logging_cli,
+        add_traceback_cli,
+    )
 
-
-def get_env_var(name, default=None, *,
-                _env_get=(lambda *args: os.environ.get(*args)),
-                ):
-    return _env_get(f'PYVSC_{name}', default)
-
-
-def get_env_flag(name, *,
-                 _get_env_var=get_env_var,
-                 ):
-    value = (_get_env_var(name) or '').strip()
-    if value.lower() in ('', '0', 'f', 'false'):
-        return False
-    return True
-
-
-def parse_args(prog=sys.argv[0], argv=sys.argv[1:], *,
-               _get_env_flag=get_env_flag,
-               ):
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument('--show-traceback', dest='showtb',
-                        action='store_true', default=None)
-    common.add_argument('--no-show-traceback', dest='showtb',
-                        action='store_false', default=None)
+    process_verbosity = add_verbosity_cli(common)
+    process_logging = add_logging_cli(common)
+    process_tb = add_traceback_cli(common)
 
     parser = argparse.ArgumentParser(
-            prog=prog,
-            parents=[common],
-            )
+        prog=prog,
+        parents=[common],
+    )
     subs = parser.add_subparsers(dest='cmd')
 
-    init = subs.add_parser('init', parents=[common])
-    init.add_argument('--name')
+    sub_init = subs.add_parser('init', parents=[common])
+    sub_init.add_argument('--name')
     # XXX version
     # XXX minvscode
     # XXX license
     # XXX author
-    init.add_argument('root')
+    sub_init.add_argument('root')
 
-    generate = subs.add_parser('generate', parents=[common])
-    generate.add_argument('--outdir')
-    generate.add_argument('root')
+    sub_generate = subs.add_parser('generate', parents=[common])
+    sub_generate.add_argument('--outdir')
+    sub_generate.add_argument('root')
 
     args = parser.parse_args(argv)
     ns = vars(args)
 
+    verbosity = process_verbosity(args)
+    logfile = process_logging(args)
+    traceback_cm = process_tb(args)
+
     cmd = ns.pop('cmd')
     if not cmd:
         parser.error('missing command')
-
-    showtb = ns.pop('showtb')
-    if showtb is None:
-        showtb = _get_env_flag('SHOW_TRACEBACK')
 
     args.root = args.root or '.'
 
@@ -92,7 +87,7 @@ def parse_args(prog=sys.argv[0], argv=sys.argv[1:], *,
                 parser.error('missing project name')
             args.name = os.path.basename(args.root)
 
-    return showtb, cmd, ns
+    return cmd, ns, verbosity, logfile, traceback_cm
 
 
 def main(cmd, *,
@@ -110,13 +105,8 @@ def main(cmd, *,
 
 
 if __name__ == '__main__':
-    showtb, cmd, kwargs = parse_args()
-    try:
+    from vscode.util.scriptutil import configure_logger
+    cmd, kwargs, verbosity, logfile, traceback_cm = parse_args()
+    configure_logger(logger, verbosity, logfile=logfile)
+    with traceback_cm:
         main(cmd, **kwargs)
-    except Exception as exc:
-        if showtb:
-            raise
-        msg = str(exc)
-        if not msg:
-            msg = type(exc).__name__
-        sys.exit(f'ERROR: {msg}')
