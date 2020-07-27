@@ -98,7 +98,9 @@ def parse_args(prog=sys.argv[0], argv=sys.argv[1:]):
     args.root = args.root or '.'
 
     if cmd == 'init':
-        if not args.name:
+        if args.name == '.':
+            args.name = os.path.basename(os.path.resolve(args.root))
+        elif not args.name:
             if args.root == '.' or args.root.endswith(os.path.sep):
                 parser.error('missing project name')
             args.name = os.path.basename(args.root)
