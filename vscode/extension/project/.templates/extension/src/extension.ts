@@ -6,7 +6,7 @@ export function activate(context: vscode.ExtensionContext) {{
     }} catch (exc) {{
         notifyUser('Extension activation failed, run the \'Developer: Toggle Developer Tools\' command for more information.');
         console.log(`ERROR: extension activation failed (${{exc}})`);
-        throw ex;  // re-raise
+        throw exc;  // re-raise
     }}
 }}
 
@@ -14,7 +14,7 @@ export function deactivate() {{
     // For now do nothing.
 }}
 
-function activateUnsafe(context: ExtensionContext) {{
+function activateUnsafe(context: vscode.ExtensionContext) {{
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "{{name}}" is now active!');
