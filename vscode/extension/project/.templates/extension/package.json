@@ -1,6 +1,6 @@
 {{
     "name": "{name}",
-    "publisher": "???",
+    "publisher": "{publisher}",
     "version": "{version}",
     "license": "{license}",
     "engines": {{

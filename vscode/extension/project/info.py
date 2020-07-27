@@ -12,6 +12,7 @@ version={version}
 minvscode={minvscode}
 license={license}
 author={author}
+publisher={publisher}
 '''
 
 
@@ -21,6 +22,7 @@ author={author}
         'minvscode',
         'license',
         'author',
+        'publisher',
         )
 class Config:
     """The configuration for a single extension project."""
@@ -30,6 +32,7 @@ class Config:
     VERSION = '0.0.1'
     MIN_VSCODE = '1.36.0'  # 2017-07-23
     LICENSE = 'MIT'
+    PUBLISHER = '???'
 
     @classmethod
     def from_file(cls, cfgfile, *,
@@ -52,7 +55,7 @@ class Config:
         return self
 
     def __new__(cls, name, version=None, minvscode=None,
-                license=None, author=None, *,
+                license=None, author=None, publisher=None, *,
                 _get_author=util.get_git_committer,
                 ):
         if not author:
@@ -64,6 +67,7 @@ class Config:
                 minvscode=util.as_str(minvscode) or cls.MIN_VSCODE,
                 license=util.as_str(license).upper() or cls.LICENSE,
                 author=util.Person.from_raw(author) if author else '',
+                publisher=util.as_str(publisher) or cls.PUBLISHER,
                 )
         return self
 
