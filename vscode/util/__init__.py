@@ -25,6 +25,7 @@ from .coercion import (
 from .git import (
         get_config as get_git_config,
         get_committer as get_git_committer,
+        get_repo_url as get_git_repo_url,
         )
 from .regex import (
         match as match_regex,
