@@ -1,4 +1,27 @@
+import contextlib
 import os.path
+import subprocess
+
+
+def cwd(dirname):
+    """A context manager for running in the given directory."""
+    orig = os.getcwd()
+    os.chdir(dirname)
+    try:
+        yield orig
+    finally:
+        os.chdir(orig)
+
+
+def run_cmd(argv):
+    """Run the given command and return the stdout text."""
+    proc = subprocess.run(argv,
+                          capture_output=True,
+                          cwd=root,
+                          check=True,
+                          text=True,
+                          )
+    return proc.stdout
 
 
 def resolve(filename, *,

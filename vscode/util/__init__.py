@@ -1,5 +1,7 @@
 # Pull in exported names.
 from .os import (
+        cwd,
+        run_cmd,
         resolve as resolve_filename,
         read_all,
         write_all,
